@@ -1,0 +1,7 @@
+ultralytics
+roboflow
+numpy
+matplotlib
+Pillow
+pyyaml
+jupyter
