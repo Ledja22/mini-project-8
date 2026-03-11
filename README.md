@@ -12,6 +12,9 @@ Key dataset details:
 * 10 classes with a highly imbalanced distribution (vehicles and pools are very rare)
 * Images are 3‑channel RGB JPGs; masks are PNGs with integer class IDs
 
+![alt text](content/color_map.png)
+
+
 For this project the data is downloaded using the `kagglehub` helper, stored under `~/.cache/kagglehub/...` and then split into train/validation/test sets (70/15/15).
 
 ## Setup Instructions
@@ -63,12 +66,12 @@ After training on the provided split (640×640, batch size 4, 25 epochs), the fo
 | Pool                | 0.0592    | 0.0000     | 0.1118     | 0.0000      |
 | Grass               | 0.7275    | 0.7255     | 0.8423     | 0.8409      |
 
-# U-Net   mIoU=0.2555  mean Dice=0.3452
-# EffNet  mIoU=0.2416  mean Dice=0.3185
+![alt text](content/training_graphs.png)
 
+#### U-Net   mIoU=0.2555  mean Dice=0.3452
+#### EffNet  mIoU=0.2416  mean Dice=0.3185
 
-### Confusion Matrices
-
+![alt text](content/model_comparison_fn.png)
 
 ## Sample Prediction Visualizations
 
@@ -81,6 +84,12 @@ The notebook also produces a grid of six test images showing:
 
 Three “good” and three “poor” examples are selected based on per‑image mIoU, providing insight into model strengths and weaknesses. The output is saved as `predictions_visualization.png`.
 
+#### Best results 
+![alt text](content/best_results.png)
+
+#### Worst results 
+![alt text](content/worst_results.png)
+
 ## Team Member Contributions
 
 * Ledja Halltari – dataset handling, data pipeline, augmentation strategy, evaluation metrics
@@ -89,4 +98,14 @@ Three “good” and three “poor” examples are selected based on per‑image
 * Nicky Cheng - Report and analysis
 
 
-This README provides the essential information to understand, run, and extend the FloodNet semantic segmentation project. For further experimentation, try altering image resolutions (256 vs 640), changing batch sizes, or swapping in other backbones.
+## Detailed Analysis
+
+**Class Difficulty & Imbalance:**
+Grass (IoU: 0.73) and intact roads (0.55) segment well due to large spatial extent and visual distinctiveness. Conversely, vehicles (0.10) and pools (0.06) fail catastrophically—they represent <0.1% of training pixels, so the model never learns their patterns. Flooded buildings/roads (IoU: 0.00) suffer from both rarity (~1% of pixels) and visual ambiguity: water-covered surfaces blend seamlessly with open water and shadows, making boundaries imperceptible. Per-class performance correlates directly with **class frequency and visual distinctiveness**.
+
+**Error Patterns & Model Limitations:**
+Error maps reveal red (incorrect) pixels concentrate along **object boundaries**, not interiors. Grass patches (70% of pixels) are predicted correctly in their interior but fail at edges. This indicates the U-Net's shallow receptive field and bilinear upsampling are insufficient for precise boundary localization on limited training data (~280 pairs). The model has learned coarse spatial patterns but cannot refine edges—a fundamental limitation of training on ~400 total images, not a resolution issue. At 640×640, large objects (grass, water) perform reasonably, but small objects (vehicles) shrink to <50 pixels and become unsegmentable regardless of resolution.
+
+**Loss Function Impact:**
+Combined Dice+CE loss (mIoU: 0.2555) outperformed CE-only (mIoU: 0.2416) because Dice prevents the model from ignoring rare classes. CE alone collapses to predicting "background" or "grass"—the path of least pixel-wise loss. Even with combined loss, vehicles and pools remain near-zero IoU, proving the problem is **fundamental data scarcity** (<10k vehicle pixels total), not optimization. FloodNet is a hard dataset to work with due to extreme imbalance (grass 60%, vehicles <0.1%), visual ambiguity (flooded structures blend with water), and high-resolution requirements (640×640 vs. 256×256). Standard segmentation techniques fail; solutions require synthetic data augmentation, class-weighted sampling, or large-scale disaster domain adaptation. 
+
