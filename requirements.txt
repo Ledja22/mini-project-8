@@ -1,7 +1,14 @@
-ultralytics
-roboflow
+tensorflow>=2.10
+tensorflow-datasets
+kaggle
+kagglehub
+albumentations
+opencv-python
 numpy
 matplotlib
+seaborn
+segmentation-models-pytorch
+scikit-learn
+jupyter
 Pillow
 pyyaml
-jupyter
