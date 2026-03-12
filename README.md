@@ -56,15 +56,15 @@ After training on the provided split (640×640, batch size 4, 25 epochs), the fo
 | Class               | U‑Net IoU | EffNet IoU | U‑Net Dice | EffNet Dice |
 |---------------------|-----------|------------|------------|-------------|
 | Background          | 0.0000    | 0.0000     | 0.0000     | 0.0000      |
-| Bldg-flooded        | 0.0000    | 0.0000     | 0.0000     | 0.0000      |
-| Bldg-intact         | 0.2352    | 0.2582     | 0.3808     | 0.4104      |
+| Bldg-flooded        | 0.0083    | 0.0000     | 0.0165     | 0.0000      |
+| Bldg-intact         | 0.2599    | 0.3775     | 0.4126     | 0.5481      |
 | Road-flooded        | 0.0000    | 0.0000     | 0.0000     | 0.0000      |
-| Road-intact         | 0.5539    | 0.5579     | 0.7129     | 0.7162      |
-| Water               | 0.4632    | 0.4414     | 0.6332     | 0.6124      |
-| Tree                | 0.4144    | 0.4333     | 0.5860     | 0.6047      |
-| Vehicle             | 0.1018    | 0.0000     | 0.1849     | 0.0000      |
-| Pool                | 0.0592    | 0.0000     | 0.1118     | 0.0000      |
-| Grass               | 0.7275    | 0.7255     | 0.8423     | 0.8409      |
+| Road-intact         | 0.4088    | 0.4247     | 0.5804     | 0.5962      |
+| Water               | 0.5141    | 0.4636     | 0.6791     | 0.6335      |
+| Tree                | 0.4508    | 0.4122     | 0.6215     | 0.5838      |
+| Vehicle             | 0.0658    | 0.0000     | 0.1235     | 0.0000      |
+| Pool                | 0.3046    | 0.0000     | 0.4669     | 0.0000      |
+| Grass               | 0.7370    | 0.7100     | 0.8486     | 0.8304      |
 
 ### Effnet matrix 
 ![alt text](content/cm_effnet.png)
@@ -72,8 +72,8 @@ After training on the provided split (640×640, batch size 4, 25 epochs), the fo
 ### U-net matrix
 ![alt text](content/cm_unet.png)
 
-#### U-Net   mIoU=0.2555  mean Dice=0.3452
-#### EffNet  mIoU=0.2416  mean Dice=0.3185
+#### U-Net   mIoU=0.2749  mean Dice=0.3749
+#### EffNet  mIoU=0.2388  mean Dice=0.3192
 
 ![alt text](content/per_class_iou.png)
 
@@ -96,17 +96,11 @@ Three “good” and three “poor” examples are selected based on per‑image
 * Ledja Halltari – dataset handling, data pipeline, augmentation strategy, evaluation metrics
 * Ledja Halltari – model architecture design (vanilla U‑Net, EfficientNet backbone), training and hyperparameter tuning
 * Ledja Halltari– visualization code, notebook formatting, README documentation, result analysis
-* Nicky Cheng - Report and analysis
+* Nicky Cheng & Ledja Halltari- Report and analysis
 
 
-## Detailed Analysis
+## Results and Analysis
 
-**Class Difficulty & Imbalance:**
-Grass (IoU: 0.73) and intact roads (0.55) segment well due to large spatial extent and visual distinctiveness. Conversely, vehicles (0.10) and pools (0.06) fail catastrophically—they represent <0.1% of training pixels, so the model never learns their patterns. Flooded buildings/roads (IoU: 0.00) suffer from both rarity (~1% of pixels) and visual ambiguity: water-covered surfaces blend seamlessly with open water and shadows, making boundaries imperceptible. Per-class performance correlates directly with **class frequency and visual distinctiveness**.
+The model performed best on large, visually consistent classes and struggled on small or semantically ambiguous ones. The easiest class to segment was Grass (IoU 0.7370), followed by Water (0.5141) and Tree (0.4508), likely because these categories form large, homogeneous regions with distinctive textures in aerial imagery. In contrast, the hardest classes were Road-flooded (0.0000), Background (0.0000), Bldg-flooded (0.0083), and Vehicle (0.0658). These classes either appear in very small regions (e.g., vehicles) or require distinguishing subtle contextual differences, such as separating flooded vs. intact structures. Error analysis shows that mistakes concentrate primarily around object boundaries and thin structures like roads, indicating the model learns coarse semantic regions well but struggles with precise localization. In more complex scenes, some errors extend into interior regions, suggesting the model also has difficulty distinguishing visually similar classes such as flooded roads, water, and grass.
 
-**Error Patterns & Model Limitations:**
-Error maps reveal red (incorrect) pixels concentrate along **object boundaries**, not interiors. Grass patches (70% of pixels) are predicted correctly in their interior but fail at edges. This indicates the U-Net's shallow receptive field and bilinear upsampling are insufficient for precise boundary localization on limited training data (~280 pairs). The model has learned coarse spatial patterns but cannot refine edges—a fundamental limitation of training on ~400 total images, not a resolution issue. At 640×640, large objects (grass, water) perform reasonably, but small objects (vehicles) shrink to <50 pixels and become unsegmentable regardless of resolution.
-
-**Loss Function Impact:**
-Combined Dice+CE loss (mIoU: 0.2555) outperformed CE-only (mIoU: 0.2416) because Dice prevents the model from ignoring rare classes. CE alone collapses to predicting "background" or "grass"—the path of least pixel-wise loss. Even with combined loss, vehicles and pools remain near-zero IoU, proving the problem is **fundamental data scarcity** (<10k vehicle pixels total), not optimization. FloodNet is a hard dataset to work with due to extreme imbalance (grass 60%, vehicles <0.1%), visual ambiguity (flooded structures blend with water), and high-resolution requirements (640×640 vs. 256×256). Standard segmentation techniques fail; solutions require synthetic data augmentation, class-weighted sampling, or large-scale disaster domain adaptation. 
-
+Image resolution had a measurable impact on performance. Training at 640×640 achieved an mIoU of 0.2749, compared to 0.2617 at 256×256, indicating that higher resolution preserves spatial detail important for identifying narrow roads, small objects, and flood boundaries. Lower resolutions remove fine structures and increase class confusion. The best-performing setup used a combined Dice + Cross-Entropy loss, which works well for segmentation problems with strong class imbalance because Dice emphasizes region overlap while cross-entropy stabilizes pixel-wise classification. Overall, the results show that while the model can segment large, consistent regions effectively, it struggles with rare classes, small objects, and subtle distinctions between flooded and non-flooded infrastructure.
