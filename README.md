@@ -66,12 +66,16 @@ After training on the provided split (640×640, batch size 4, 25 epochs), the fo
 | Pool                | 0.0592    | 0.0000     | 0.1118     | 0.0000      |
 | Grass               | 0.7275    | 0.7255     | 0.8423     | 0.8409      |
 
-![alt text](content/training_graphs.png)
+### Effnet matrix 
+![alt text](content/cm_effnet.png)
+
+### U-net matrix
+![alt text](content/cm_unet.png)
 
 #### U-Net   mIoU=0.2555  mean Dice=0.3452
 #### EffNet  mIoU=0.2416  mean Dice=0.3185
 
-![alt text](content/model_comparison_fn.png)
+![alt text](content/per_class_iou.png)
 
 ## Sample Prediction Visualizations
 
@@ -84,11 +88,8 @@ The notebook also produces a grid of six test images showing:
 
 Three “good” and three “poor” examples are selected based on per‑image mIoU, providing insight into model strengths and weaknesses. The output is saved as `predictions_visualization.png`.
 
-#### Best results 
-![alt text](content/best_results.png)
-
-#### Worst results 
-![alt text](content/worst_results.png)
+#### Best and Worst results 
+![alt text](content/predictions_visualization.png)
 
 ## Team Member Contributions
 
